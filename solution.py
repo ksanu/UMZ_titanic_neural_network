@@ -36,7 +36,7 @@ train_X_in_tsv['Ticket'] = ticket_type_col['Ticket type']
 train_y_in_tsv = train_X_in_tsv['Survived']
 train_X_in_tsv.drop(columns=['Survived'], inplace=True)
 
-test_X =  pandas.read_csv('dev-0/in.tsv', sep='\t', header=None, names=["PassengerId", "Pclass", "Name",
+test_X =  pandas.read_csv('test-A/in.tsv', sep='\t', header=None, names=["PassengerId", "Pclass", "Name",
                                                                         "Sex","Age", "SibSp", "Parch", "Ticket", "Fare",
                                                                         "Cabin", "Embarked"])
 test_X.drop(columns=['PassengerId', 'Name'], inplace=True)
@@ -61,14 +61,6 @@ for row in ticket_col:
 ticket_type_col = pandas.DataFrame(data=ticket_type_list, columns=['Ticket type'])
 test_X['Ticket'] = ticket_type_col['Ticket type']
 
-test_y = pandas.read_csv('dev-0/expected.tsv', sep='\t', header=None, names=["Survived"])
-
-def encode_data(train_data):
-    train_data.fillna('0', inplace=True)
-    for column in train_data.columns:
-        if train_data[column].dtype == type(object):
-            le = preprocessing.LabelEncoder()
-            train_data[column] = le.fit_transform(train_data[column])
 
 def encoder(data):
     '''Map the categorical variables to numbers to work with scikit learn'''
@@ -90,18 +82,7 @@ my_classifier = DecisionTreeClassifier()
 my_classifier.fit(train_X_in_tsv, train_y_in_tsv)
 
 y_out_predicted = my_classifier.predict(test_X)
-print (y_out_predicted)
 
-test_y =test_y['Survived']
-score = accuracy_score(test_y, y_out_predicted)
-print("accuracy: %f" % score)
-print("precision: " )
-print( precision_score(test_y, y_out_predicted, pos_label=1))
-print("recall: " )
-print(recall_score(test_y, y_out_predicted, pos_label=1))
-print("f1: " )
-print(f1_score(test_y, y_out_predicted, pos_label=1))
-
-with open('dev-0/out.tsv', 'w') as output_file:
+with open('test-A/out.tsv', 'w') as output_file:
     for out in y_out_predicted:
         print('%d' % out, file=output_file)
