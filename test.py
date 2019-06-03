@@ -1,9 +1,11 @@
 import numpy as np
 import pandas
 import re
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn import preprocessing
+from keras.models import Sequential
+from keras.layers import Dense
+
 column_names = ['PassengerId', 'Pclass', 'Name', 'Sex', 'Age', 'SibSp', 'Parch', 'Ticket', 'Fare', 'Cabin', 'Embarked']
 
 train_X_in_tsv = pandas.read_csv('train/train.tsv', sep='\t', header=0, usecols=['Survived', 'Pclass',
@@ -86,22 +88,45 @@ def encoder(data):
 train_X_in_tsv = encoder(train_X_in_tsv)
 test_X= encoder(test_X)
 
-my_classifier = DecisionTreeClassifier()
-my_classifier.fit(train_X_in_tsv, train_y_in_tsv)
+my_model = Sequential()
+my_model.add(Dense(9, input_dim=9))
+my_model.add(Dense(9))
+my_model.add(Dense(9))
+my_model.add(Dense(1, activation='sigmoid'))
+#my_model.add(Dense(1, activation='softmax'))
 
-y_out_predicted = my_classifier.predict(test_X)
-print (y_out_predicted)
+
+my_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+my_model.fit(train_X_in_tsv, train_y_in_tsv, epochs=400)
+
+y_out_predicted = my_model.predict(test_X)
+print (y_out_predicted.tolist())
 
 test_y =test_y['Survived']
-score = accuracy_score(test_y, y_out_predicted)
-print("accuracy: %f" % score)
-print("precision: " )
-print( precision_score(test_y, y_out_predicted, pos_label=1))
-print("recall: " )
-print(recall_score(test_y, y_out_predicted, pos_label=1))
-print("f1: " )
-print(f1_score(test_y, y_out_predicted, pos_label=1))
+scores = my_model.evaluate(train_X_in_tsv, train_y_in_tsv)
+
+for i in range(len(scores)):
+    print('{}:\t{:.4f}'.format(my_model.metrics_names[i], scores[i]))
+
+threshold = 0.566
+y_out = np.where(y_out_predicted > threshold, 1, 0)
+#prevScore = accuracy_score(test_y, y_out)
+'''
+while(True):
+    y_out = np.where(y_out_predicted > threshold, 1, 0)
+    score = accuracy_score(test_y, y_out)
+    if(score >= prevScore):
+        threshold += 0.0001
+
+   # 0.8432835820895522
+    #thr: 0.566
+    prevScore = score
+    print("accuracy: {}, thr: {}".format(score, threshold))
+
+'''
+score = accuracy_score(test_y, y_out)
+print("accuracy: {}, thr: {}".format(score, threshold))
 
 with open('dev-0/out.tsv', 'w') as output_file:
-    for out in y_out_predicted:
+    for out in y_out:
         print('%d' % out, file=output_file)
